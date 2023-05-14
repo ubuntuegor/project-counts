@@ -20,6 +20,10 @@ intellij {
 }
 
 tasks {
+    buildSearchableOptions {
+        enabled = false
+    }
+
     compileKotlin {
         kotlinOptions.jvmTarget = "17"
     }
