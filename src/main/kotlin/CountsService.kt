@@ -159,6 +159,10 @@ class CountsService(private val project: Project) : Disposable {
         changeListener = listener
     }
 
+    fun removeChangeListener() {
+        changeListener = {}
+    }
+
     private fun notifyListener() {
         changeListener(projectCounts!!)
     }

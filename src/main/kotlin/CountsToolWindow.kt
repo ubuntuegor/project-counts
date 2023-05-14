@@ -1,6 +1,7 @@
 package to.bnt.plugin.counts
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -113,18 +114,22 @@ class CountsToolWindow : ToolWindowFactory, DumbAware {
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val contentManager = toolWindow.contentManager
+        // disposed when toolwindow is destroyed
+        val disposable = Disposable { project.service<CountsService>().removeChangeListener() }
 
+        val loader = JBLoadingPanel(GridLayout(), disposable)
         scrollPane = JBScrollPane(
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
         )
-        val loader = JBLoadingPanel(GridLayout(), contentManager)
 
         loader.add(scrollPane)
         loader.startLoading()
 
+        val contentManager = toolWindow.contentManager
         val content = contentManager.factory.createContent(loader, null, false)
+        content.setDisposer(disposable)
+
         contentManager.addContent(content)
 
         project.service<CountsService>().let {
