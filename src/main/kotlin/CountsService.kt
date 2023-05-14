@@ -31,6 +31,7 @@ class CountsService(private val project: Project) : Disposable {
     private fun calculateProjectCounts(): CountsFolder {
         val psiManager = PsiManager.getInstance(project)
         val roots = ProjectRootManager.getInstance(project).contentRoots
+        roots.sortBy { it.path }
 
         val tree = CountsFolder("")
 
