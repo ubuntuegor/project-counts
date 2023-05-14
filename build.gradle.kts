@@ -15,6 +15,8 @@ repositories {
 intellij {
     version.set("2022.2.5")
     type.set("IC")
+
+    plugins.set(listOf("com.intellij.java", "org.jetbrains.kotlin"))
 }
 
 tasks {
@@ -27,7 +29,6 @@ tasks {
     }
 
     patchPluginXml {
-        version.set("${project.version}")
         sinceBuild.set("222")
         untilBuild.set("232.*")
     }
