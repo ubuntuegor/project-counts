@@ -104,7 +104,6 @@ class CountsToolWindow : ToolWindowFactory, DumbAware {
         return panel
     }
 
-    private lateinit var loader: JBLoadingPanel
     private lateinit var scrollPane: JBScrollPane
 
     private fun updateTable(table: JComponent) {
@@ -120,7 +119,7 @@ class CountsToolWindow : ToolWindowFactory, DumbAware {
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
         )
-        loader = JBLoadingPanel(GridLayout(), contentManager)
+        val loader = JBLoadingPanel(GridLayout(), contentManager)
 
         loader.add(scrollPane)
         loader.startLoading()

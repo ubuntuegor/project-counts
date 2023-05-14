@@ -1,10 +1,5 @@
 package to.bnt.plugin.counts
 
-// to my understanding separators are normalized across OSes in VFS
-const val PATH_SEPARATOR = "/"
-
-private fun splitPath(path: String) = path.split(PATH_SEPARATOR)
-
 data class Counts(val classes: Int, val functions: Int) {
     companion object {
         fun default() = Counts(0, 0)

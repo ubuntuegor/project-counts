@@ -1,11 +1,9 @@
 package to.bnt.plugin.counts
 
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -17,12 +15,6 @@ import com.intellij.psi.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 
 private val LOG = logger<CountsService>()
 
@@ -34,34 +26,6 @@ class CountsService(private val project: Project) : Disposable {
 
     override fun dispose() {
         coroutineScope.cancel()
-    }
-
-    private fun isSupportedFileType(ft: FileType) = ft is JavaFileType || ft is KotlinFileType
-
-    fun getCountsForPsi(psi: PsiFile): Counts? {
-        var classes = 0
-        var functions = 0
-
-        when (psi) {
-            is PsiJavaFile -> {
-                psi.forEachDescendantOfType<PsiClass> { classes++ }
-                psi.forEachDescendantOfType<PsiMethod> { functions++ }
-            }
-
-            is KtFile -> {
-                psi.forEachDescendantOfType<KtClass> { classes++ }
-                psi.forEachDescendantOfType<KtNamedFunction> { functions++ }
-            }
-
-            else -> return null
-        }
-
-        return Counts(classes, functions)
-    }
-
-    fun getCountsForVfs(file: VirtualFile): Counts? {
-        val psi = file.toPsiFile(project) ?: return null
-        return getCountsForPsi(psi)
     }
 
     private fun calculateProjectCounts(): CountsFolder {
@@ -96,8 +60,10 @@ class CountsService(private val project: Project) : Disposable {
         return when (event) {
             is VFileContentChangeEvent -> {
                 val file = event.file
+                if (!isSupportedFileType(file.fileType)) return false
+
                 val oldCounts = projectCounts!!.getCountsForPath(file.path)
-                val counts = getCountsForVfs(file)
+                val counts = getCountsForVfs(project, file)
 
                 if (counts != oldCounts) {
                     if (counts == null) projectCounts!!.removePath(file.path)
@@ -109,8 +75,11 @@ class CountsService(private val project: Project) : Disposable {
             is VFilePropertyChangeEvent -> {
                 // is rename
                 if (VirtualFile.PROP_NAME == event.propertyName) {
-                    val counts = projectCounts!!.removePath(event.oldPath) ?: return false
+                    val oldCounts = projectCounts!!.removePath(event.oldPath)
+                    val shouldNotify = oldCounts != null
+                    if (!isSupportedFileType(event.file.fileType)) return shouldNotify
 
+                    val counts = oldCounts ?: getCountsForVfs(project, event.file) ?: return false
                     projectCounts!!.setCountsForPath(event.file.path, counts)
                     true
                 } else false
@@ -118,6 +87,7 @@ class CountsService(private val project: Project) : Disposable {
 
             is VFileCreateEvent -> {
                 val file = event.file ?: return false
+                if (!isSupportedFileType(file.fileType)) return false
                 projectCounts!!.setCountsForPath(file.path, Counts.default())
                 true
             }
