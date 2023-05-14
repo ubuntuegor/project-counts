@@ -90,9 +90,9 @@ class CountsToolWindow : ToolWindowFactory, DumbAware {
     private fun createTable(counts: CountsFolder): JComponent {
         val panel = panel {
             row {
-                label("Name").resizableColumn()
-                label("Classes")
-                label("Functions")
+                label(PluginBundle.message("to.bnt.plugin.counts.name")).resizableColumn()
+                label(PluginBundle.message("to.bnt.plugin.counts.classes"))
+                label(PluginBundle.message("to.bnt.plugin.counts.functions"))
             }.layout(RowLayout.PARENT_GRID)
 
             separator()
